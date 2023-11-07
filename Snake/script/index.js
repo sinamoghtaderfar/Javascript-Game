@@ -1,6 +1,8 @@
+// Get elements
 const playBoard = document.querySelector(".play-board");
 const scoreEl = document.querySelector(".score");
 const highScoreEl = document.querySelector(".hight-score");
+const countdownElement = document.getElementById('countdown');
 
 let foodX, foodY;
 let snakeX = 7,snakeY = 10;
@@ -11,8 +13,9 @@ let snakBody = [];
 let gameOver = false;
 let setIntervalId;
 let score = 0;
-
-
+let foodCreatedTime = 0; 
+let foodExists = false;
+let countdown;
 // getting high score from the local storage;
 let highScore = localStorage.getItem("high-score") || 0;
 highScoreEl.innerHTML = `High Score : ${highScore}`;
@@ -27,12 +30,15 @@ const handleGameOver = () => {
 const changeFoodPosition = () => {
   foodX = Math.floor(Math.random() * 30) + 1;
   foodY = Math.floor(Math.random() * 30) + 1;
+
+  foodCreatedTime = Date.now(); // Record the time the food was created
+  foodExists = true;
 };
 
 const initGame = () => {
   gameOver ? handleGameOver() : undefined;
 //   if (gameOver) return handleGameOver();
-
+  let currentTime = Date.now(); // Get the current time
   let htmlMarkup = `<div class="food" style="grid-area: ${foodY} / ${foodX}"></div>`;
 
   // checking if the snake hit the food
@@ -62,12 +68,38 @@ const initGame = () => {
   }
 
   for (let i = 0; i < snakBody.length; i++) {
-    //  adding a div
+    
     htmlMarkup += `<div class="head" style="grid-area: ${snakBody[i][1]} / ${snakBody[i][0]}"></div>`;
     if(i !== 0 && snakBody[0][1] === snakBody[i][1] && snakBody[0][0] === snakBody[i][0]) gameOver = true;
   }
 
+  if (foodExists && currentTime - foodCreatedTime > 5000) {
+    foodExists = false; 
+  }
+
+  // If food doesn't exist, or it has disappeared, generate new food
+  if (!foodExists) {
+    changeFoodPosition();
+  }
+
   playBoard.innerHTML = htmlMarkup;
+  countdownElement.textContent = countdown;
+  
+  if (countdown > 0) {
+    // Decrement the countdown if it's greater than 0
+    countdown--;
+  } else {
+    // If countdown reaches 0, generate new food
+    changeFoodPosition();
+    countdown = 30; // Reset the countdown timer
+  }
+  // Set a timeout to remove the food after 10 seconds
+  foodTimeout = setTimeout(() => {
+    foodElement.remove();
+    clearInterval(countdownInterval); // Clear the interval if the food disappears
+    countdown = 30; // Reset the countdown timer
+    changeFoodPosition(); // Generate new food after 10 seconds
+  }, 30000);
 };
 
 const changeDirection = (e) => {
@@ -86,6 +118,8 @@ const changeDirection = (e) => {
     velocityY = 0;
   }
   // initGame();
+  // countdownElement.textContent = countdown;
+
 };
 
 changeFoodPosition();
